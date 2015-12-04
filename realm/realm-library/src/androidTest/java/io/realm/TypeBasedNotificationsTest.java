@@ -67,6 +67,53 @@ public class TypeBasedNotificationsTest extends AndroidTestCase {
         }
     }
 
+    // ****************************************************************************************** //
+    // UC 0.
+    // Callback should be notified if create RealmObject without a findFirst
+    // ***************************************************************************************** //
+
+    //UC 0 using Realm.createObject
+    public void test_callback_should_trigger_for_createObject() {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                realm = Realm.getInstance(configuration);
+                realm.addChangeListener(new RealmChangeListener() {
+                    @Override
+                    public void onChange() {
+                        if (globalCommitInvocations.incrementAndGet() == 2) {
+                            realm.handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    signalTestFinished.countDown();
+                                }
+                            });
+                        }
+                    }
+                });
+
+                realm.beginTransaction();
+                final Dog dog = realm.createObject(Dog.class);
+                realm.commitTransaction();
+
+                dog.addChangeListener(new RealmChangeListener() {
+                    @Override
+                    public void onChange() {
+                        assertEquals("Akamaruu", dog.getName());
+                        typebasedCommitInvocations.incrementAndGet();
+                    }
+                });
+
+                realm.beginTransaction();
+                dog.setName("Akamaru");
+                realm.commitTransaction();
+            }
+        });
+
+        TestHelper.awaitOrFail(signalTestFinished);
+        assertEquals(1, typebasedCommitInvocations.get());
+    }
+
     // ********************************************************************************* //
     // UC 1.
     // Callback should be invoked after a relevant commit (one that should impact the
