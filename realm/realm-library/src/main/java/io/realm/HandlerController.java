@@ -495,7 +495,7 @@ public class HandlerController implements Handler.Callback {
                         if (realmQuery == null) { // this is a retry of an empty RealmObject
                             realmQuery = emptyAsyncRealmObject.get(realmObjectWeakReference);
                         }
-
+                        // enhance to make it update only this query
                         QueryUpdateTask queryUpdateTask = QueryUpdateTask.newBuilder()
                                 .realmConfiguration(realm.getConfiguration())
                                 .addObject(realmObjectWeakReference,
